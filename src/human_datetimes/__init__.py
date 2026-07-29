@@ -1,18 +1,17 @@
 import datetime
+import logging
 import shutil
 import subprocess
 import zoneinfo
-
-from typing import cast
 from dataclasses import dataclass
+from typing import cast
+
+from . import business_day, utils
 
 import cron_converter
 import dateparser
 import dateutil.parser
 
-from . import business_day, utils
-
-import logging
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -24,7 +23,7 @@ class Context:
     tzinfo: datetime.tzinfo
     country: str | None
 
-    def __init__(self, now=None, tz=None, country=None):
+    def __init__(self, now: datetime.datetime | None = None, tz: str | None = None, country: str | None = None):
         self._now = now
 
         if self._now is not None:
@@ -45,7 +44,7 @@ class Context:
         if self.country is None:
             self.country = utils.figure_out_countrycode_from_timezone(self.tz)
 
-    def parse(self, human_string):
+    def parse(self, human_string) -> datetime.datetime:
         try:
             dt = cron_converter.Cron(human_string).schedule(self.now.astimezone(self.tzinfo)).next()
             logger.debug("cron format succeeded; %s: %s", human_string, dt)
@@ -145,7 +144,7 @@ class Context:
         assert utils.is_aware(dt)
         return dt
 
-def parse_schedule(human_string, tz=None, now=None, country=None):
+def parse(human_string: str, tz: str | None = None, now: datetime.datetime | None = None, country: str | None = None) -> datetime.datetime:
     ctx = Context(now=now, tz=tz, country=country)
     logger.debug("parsing: %s %s", human_string, ctx)
 
@@ -159,3 +158,8 @@ def parse_schedule(human_string, tz=None, now=None, country=None):
             pass
 
     return ctx.parse(human_string)
+
+def local(human_string: str, now: datetime.datetime | None = None) -> datetime.datetime:
+    if now is None:
+        now = datetime.datetime.now()
+    return parse(human_string, now=now.astimezone())
