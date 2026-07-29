@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import zoneinfo
 from dataclasses import dataclass
-from typing import cast
+from typing import Literal, cast
 from pathlib import Path
 
 from . import business_day, utils
@@ -15,6 +15,8 @@ import dateutil.parser
 
 logger = logging.getLogger(__name__)
 
+Bias = Literal["future", "past"]
+
 @dataclass
 class Context:
     now: datetime.datetime
@@ -23,8 +25,9 @@ class Context:
     _tz: str | None
     tzinfo: datetime.tzinfo
     country: str | None
+    bias: Bias
 
-    def __init__(self, now: datetime.datetime | None = None, tz: str | None = None, country: str | None = None):
+    def __init__(self, now: datetime.datetime | None = None, tz: str | None = None, country: str | None = None, bias: Bias | None = None):
         self._now = now
 
         if self._now is not None:
@@ -44,6 +47,8 @@ class Context:
         self.country = country
         if self.country is None:
             self.country = utils.figure_out_countrycode_from_timezone(self.tz)
+
+        self.bias = bias or "past"
 
     def parse(self, human_string) -> datetime.datetime:
         try:
@@ -80,8 +85,10 @@ class Context:
                 raise NotImplementedError()
 
             dt = datetime.datetime.combine(self.now.date(), t, tzinfo=self.tzinfo)
-            if dt < self.now:
+            if self.bias == "future" and dt < self.now:
                 dt += datetime.timedelta(days=1)
+            elif self.bias == "past" and dt > self.now:
+                raise NotImplementedError()
             return dt
         except ValueError:
             pass
@@ -128,7 +135,7 @@ class Context:
 
         settings = {
             "RETURN_AS_TIMEZONE_AWARE": True,
-            "PREFER_DATES_FROM": "future",
+            "PREFER_DATES_FROM": self.bias,
         }
         if self.tz is not None:
             settings["TIMEZONE"] = self.tz
@@ -145,8 +152,13 @@ class Context:
         assert utils.is_aware(dt)
         return dt
 
-def parse(human_string: str, tz: str | None = None, now: datetime.datetime | None = None, country: str | None = None) -> datetime.datetime:
-    ctx = Context(now=now, tz=tz, country=country)
+def parse(human_string: str,
+    tz: str | None = None,
+    now: datetime.datetime | None = None,
+    country: str | None = None,
+    bias: Bias | None = None,
+) -> datetime.datetime:
+    ctx = Context(now=now, tz=tz, country=country, bias=bias)
     logger.debug("parsing: %s %s", human_string, ctx)
 
     if ctx.country is not None:
@@ -160,7 +172,16 @@ def parse(human_string: str, tz: str | None = None, now: datetime.datetime | Non
 
     return ctx.parse(human_string)
 
-def local(human_string: str, now: datetime.datetime | None = None) -> datetime.datetime:
+def parse_schedule(human_string: str,
+    tz: str | None = None,
+    now: datetime.datetime | None = None,
+    country: str | None = None,
+) -> datetime.datetime:
+    return parse(human_string, tz=tz, now=now, country=country, bias="future")
+
+def local(human_string: str,
+    now: datetime.datetime | None = None,
+) -> datetime.datetime:
     if now is None:
         now = datetime.datetime.now()
     return parse(human_string, tz=local_timezone(), now=now.astimezone())

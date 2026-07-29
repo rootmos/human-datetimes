@@ -39,8 +39,6 @@ class ParseHumanDatetimes(fresh.Seed, unittest.TestCase):
         ("tomorrow", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-24T15:38:46+00:00"),
         ("monday", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-05T00:00:00+00:00"),
         ("February", "UTC", "1970-01-01T00:00:00+00:00", "1970-02-01T00:00:00+00:00"),
-        ("16/7", "UTC", "1970-01-01T00:00:00+00:00", "1970-07-16T00:00:00+00:00"),
-        ("16/7", "UTC", "1970-08-01T00:00:00+00:00", "1971-07-16T00:00:00+00:00"),
         ("today 16:40", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+00:00"),
         ("today 16:40", "UTC", "1970-01-01T17:00:00+00:00", "1970-01-01T16:40:00+00:00"),
         ("16:40", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+00:00"),
@@ -51,15 +49,26 @@ class ParseHumanDatetimes(fresh.Seed, unittest.TestCase):
         ("16:40", "Europe/Stockholm", "1981-07-01T00:00:00+00:00", "1981-07-01T16:40:00+02:00"),
         ("Friday 10:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-21T10:00:00+01:00"),
         ("fredag 10:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-21T10:00:00+01:00"),
-        ("Friday 7:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-28T07:00:00+01:00"),
-        ("fredag 7:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-28T07:00:00+01:00"),
         ("05:58", "Europe/Stockholm", "2025-03-31T06:19:40+00:00", "2025-04-01T05:58:00+02:00"),
         ("07:00", "UTC", "2025-03-31T06:00:00+00:00", "2025-03-31T07:00:00+00:00"),
         ("05:00", "UTC", "2025-03-31T06:00:00+00:00", "2025-04-01T05:00:00+00:00"),
     ])
-    def test_relative(self, human_string, tz, now, expected):
-        actual = parse(human_string=human_string, tz=tz, now=iso8601(now))
-        assert iso8601(actual) == expected
+    def test_relative_unbiased(self, human_string, tz, now, expected):
+        future = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="future")
+        assert iso8601(future) == expected
+
+        past = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="past")
+        assert iso8601(past) == expected
+
+    @parameterized.expand([
+        ("16/7", "UTC", "1970-01-01T00:00:00+00:00", "1970-07-16T00:00:00+00:00"),
+        ("16/7", "UTC", "1970-08-01T00:00:00+00:00", "1971-07-16T00:00:00+00:00"),
+        ("Friday 7:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-28T07:00:00+01:00"),
+        ("fredag 7:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-28T07:00:00+01:00"),
+    ])
+    def test_relative_biased_future(self, human_string, tz, now, expected):
+        future = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="future")
+        assert iso8601(future) == expected
 
     @pytest.mark.skip
     def test_local(self):
