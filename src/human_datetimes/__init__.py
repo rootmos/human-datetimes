@@ -5,6 +5,7 @@ import subprocess
 import zoneinfo
 from dataclasses import dataclass
 from typing import cast
+from pathlib import Path
 
 from . import business_day, utils
 
@@ -162,4 +163,13 @@ def parse(human_string: str, tz: str | None = None, now: datetime.datetime | Non
 def local(human_string: str, now: datetime.datetime | None = None) -> datetime.datetime:
     if now is None:
         now = datetime.datetime.now()
-    return parse(human_string, now=now.astimezone())
+    return parse(human_string, tz=local_timezone(), now=now.astimezone())
+
+def local_timezone() -> str | None:
+    f = Path("/etc/localtime")
+    if f.exists():
+        f = f.readlink()
+    if f.exists():
+        tz = f.relative_to("/usr/share/zoneinfo")
+        return str(tz)
+    return None
