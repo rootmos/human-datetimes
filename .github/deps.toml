@@ -1,0 +1,4 @@
+[build]
+arch = [ "make", "python-pipx" ]
+debian = [ "make", "pipx" ]
+ubuntu = [ "make", "pipx" ]

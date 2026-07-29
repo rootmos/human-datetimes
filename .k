@@ -9,17 +9,9 @@ in_venv() {
 }
 
 test() {
-    in_venv pytest -vv "$@"
-}
-
-run() {
-    in_venv human-datetimes "$@"
+    in_venv make test
 }
 
 update() {
     poetry show --latest --top-level
-}
-
-go() {
-    run sandbox
 }

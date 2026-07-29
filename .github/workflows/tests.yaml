@@ -1,0 +1,59 @@
+name: Tests
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ "archlinux", "debian", "ubuntu" ]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.distro }}:latest
+    env:
+      ARTIFACT_ROOT: /tmp/artifact
+    steps:
+    # https://stackoverflow.com/a/60942437
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y-%m-%d')" >> "$GITHUB_OUTPUT"
+
+    - name: Check out preparation files
+      uses: actions/checkout@v6
+      with:
+        sparse-checkout: .github/prepare
+        sparse-checkout-cone-mode: false
+
+    - name: Prepare build environment
+      run: .github/prepare -ug
+
+
+    - name: Check out repository code
+      uses: actions/checkout@v6
+
+    - name: Install build dependencies
+      run: .github/deps -b
+
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Build
+      run: make build OUTPUT="${{ env.ARTIFACT_ROOT }}/${{ env.ARTIFACT }}"
+      env:
+        ARTIFACT: &artifact "${{ github.job }}_${{ matrix.distro }}_${{ steps.date.outputs.date }}_${{ github.run_id }}"
+
+    - name: Run tests
+      run: |
+        set -o pipefail
+        make test | tee "${{ env.ARTIFACT_ROOT }}/${{ env.ARTIFACT }}/test.log"
+      env:
+        ARTIFACT: *artifact
+
+    - name: Keep artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v6
+      with:
+        name: *artifact
+        path: "${{ env.ARTIFACT_ROOT }}"
