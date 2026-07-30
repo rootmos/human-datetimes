@@ -88,7 +88,7 @@ class Context:
             if self.bias == "future" and dt < self.now:
                 dt += datetime.timedelta(days=1)
             elif self.bias == "past" and dt > self.now:
-                raise NotImplementedError()
+                dt -= datetime.timedelta(days=1)
             return dt
         except ValueError:
             pass
