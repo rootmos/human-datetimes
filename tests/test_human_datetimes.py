@@ -15,7 +15,6 @@ def iso8601(x: str | None) -> datetime | None:
         return None
     return datetime.fromisoformat(x)
 
-
 class AssertDatetimeEqual:
     @staticmethod
     def prepareDatetime(x: str | datetime) -> tuple[str, datetime]:
