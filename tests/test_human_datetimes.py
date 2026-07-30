@@ -70,6 +70,7 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
 
     @parameterized.expand([
         ("tomorrow", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-24T15:38:46+00:00"),
+        ("yesterday", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-22T15:38:46+00:00"),
         ("monday", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-05T00:00:00+00:00"),
         ("February", "UTC", "1970-01-01T00:00:00+00:00", "1970-02-01T00:00:00+00:00"),
         ("today 16:40", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+00:00"),
@@ -78,6 +79,10 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         ("today 16:40", "Europe/Stockholm", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+01:00"),
         ("Friday 10:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-21T10:00:00+01:00"),
         ("fredag 10:00", "Europe/Stockholm", "2025-03-21T08:09:09+01:00", "2025-03-21T10:00:00+01:00"),
+        ("7 minutes ago", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-30T06:10:11+00:00"),
+        ("in 7 minutes", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-30T06:24:11+00:00"),
+        ("two days ago", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-28T06:17:11+00:00"),
+        ("in three days", "UTC", "2026-07-30T08:17:11+02:00", "2026-08-02T06:17:11+00:00"),
     ])
     def test_relative_unbiased(self, human_string, tz, now, expected):
         future = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="future")
