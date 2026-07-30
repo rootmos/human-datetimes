@@ -3,9 +3,10 @@ import logging
 import shutil
 import subprocess
 import zoneinfo
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal, cast
 from pathlib import Path
+import re
 
 from . import business_day, utils
 
@@ -20,9 +21,9 @@ Bias = Literal["future", "past"]
 @dataclass
 class Context:
     now: datetime.datetime
-    _now: datetime.datetime | None
+    _now: datetime.datetime | None = field(repr=False)
     tz: str
-    _tz: str | None
+    _tz: str | None = field(repr=False)
     tzinfo: datetime.tzinfo
     country: str | None
     bias: Bias
@@ -59,6 +60,9 @@ class Context:
         except ValueError:
             logger.debug("cron format failed: %s", human_string)
             pass
+
+        # clean up: 7:15 -> 07:15
+        human_string = re.sub(r"(^|\D)(\d:\d\d)", r"\g<1>0\2", human_string)
 
         try:
             logger.debug("trying datetime.datetime.fromisoformat: %s", human_string)
