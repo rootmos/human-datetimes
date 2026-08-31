@@ -60,11 +60,12 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         self.assertDatetimeEqual(actual, expected)
 
     @parameterized.expand([
-        ("foo", "local"),
+        ("foo", None),
         ("tomorrow", "foo"),
+        ("", None),
     ])
     def test_invalid(self, human_string, tz):
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             print(parse(human_string=human_string, tz=tz))
 
     @parameterized.expand([

@@ -40,7 +40,10 @@ class Context:
         self._tz = tz
         if self._tz is not None:
             self.tz = self._tz
-            self.tzinfo = zoneinfo.ZoneInfo(self._tz)
+            try:
+                self.tzinfo = zoneinfo.ZoneInfo(self._tz)
+            except zoneinfo.ZoneInfoNotFoundError:
+                raise ValueError(f"unable to parse timezone: {self._tz}")
         else:
             self.tzinfo = cast(datetime.tzinfo, self.now.tzinfo) # from assert.is_aware(self.now)
             self.tz = str(self.now.tzinfo)
@@ -52,12 +55,19 @@ class Context:
         self.bias = bias or "past"
 
     def parse(self, human_string) -> datetime.datetime:
+        human_string = human_string.strip()
+        if human_string == "":
+            raise ValueError("empty string")
+
         try:
             dt = cron_converter.Cron(human_string).schedule(self.now.astimezone(self.tzinfo)).next()
             logger.debug("cron format succeeded; %s: %s", human_string, dt)
             assert utils.is_aware(dt)
             return dt
         except ValueError:
+            logger.debug("cron format failed: %s", human_string)
+            pass
+        except LookupError:
             logger.debug("cron format failed: %s", human_string)
             pass
 
