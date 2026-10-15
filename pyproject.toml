@@ -1,6 +1,6 @@
 [project]
 name = "human-datetimes"
-version = "0.1.6"
+version = "0.1.7"
 requires-python = ">=3.13,<4"
 dependencies = [
     "dateparser (>=1.4.3,<2)",
@@ -10,6 +10,14 @@ dependencies = [
     "pytz (==2026.5)",
     "tzdata (==2026.5)",
 ]
+
+[project.optional-dependencies]
+cli = [
+    "argcomplete (>=3.7.2,<4.0.0)",
+]
+
+[project.scripts]
+human-datetime = "human_datetimes.cli:main"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^9.1.1"

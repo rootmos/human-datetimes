@@ -99,6 +99,7 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         ("07:00", "UTC", "2025-03-31T06:00:00+00:00", "2025-03-31T07:00:00+00:00"),
         ("05:00", "UTC", "2025-03-31T06:00:00+00:00", "2025-04-01T05:00:00+00:00"),
         ("08:00", "Europe/Stockholm", "2026-03-28T09:00:00+01:00", "2026-03-29T08:00:00+02:00"),
+        ("friday", "Europe/Stockholm", "2026-10-15T06:20:53+02:00", "2026-10-16T06:20:53+02:00"),
     ])
     def test_relative_biased_future(self, human_string, tz, now, expected):
         future = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="future")
