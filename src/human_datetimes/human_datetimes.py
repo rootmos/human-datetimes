@@ -84,19 +84,6 @@ class Context:
         except ValueError:
             pass
 
-        exe = shutil.which("date")
-        if exe and self._now is None:
-            try:
-                logger.debug("attempting `date`: %s", human_string)
-                output = subprocess.check_output([exe, "-Is", "--date=" + human_string], text=True, env={"TZ": self.tz or str(self.tzinfo)}, stderr=subprocess.DEVNULL)
-                dt = datetime.datetime.fromisoformat(output.splitlines()[0])
-                if self.bias == "past" and dt >= self.now:
-                    logger.debug("rejecting `date` based on bias")
-                else:
-                    return dt
-            except subprocess.CalledProcessError:
-                pass
-
         try:
             logger.debug("trying datetime.time.fromisoformat: %s", human_string)
             t = datetime.time.fromisoformat(human_string)
@@ -144,7 +131,7 @@ class Context:
             dt = dateutil.parser.parse(
                 timestr = human_string,
                 parserinfo = CustomParserInfo(),
-                default = self.now,
+                default = utils.truncate(self.now),
             ).replace(tzinfo=self.tzinfo)
             assert utils.is_aware(dt)
             if dt >= self.now:
@@ -168,7 +155,7 @@ class Context:
 
         logger.debug("attempting dateparser: %s", human_string)
         logger.debug("dateparser settings: %s", settings)
-        dt = dateparser.parse(human_string, settings = settings)
+        dt = dateparser.parse(human_string, settings=settings)
         if dt is None:
             raise ValueError("unable to parse as datetime", human_string, self)
         assert utils.is_aware(dt)
