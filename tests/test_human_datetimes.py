@@ -45,6 +45,7 @@ class AssertDatetimeEqual:
 class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
     @parameterized.expand([
         ("23 January 2025", "Europe/Stockholm", "2025-01-23T00:00:00+01:00"),
+        ("23 januari 2025", "Europe/Stockholm", "2025-01-23T00:00:00+01:00"),
         ("6 juni 1979", "Europe/Stockholm", "1979-06-06T00:00:00+01:00"),
         ("6 juni 1980", "Europe/Stockholm", "1980-06-06T00:00:00+02:00"),
         ("6 June 1979", "Europe/Stockholm", "1979-06-06T00:00:00+01:00"),
@@ -54,6 +55,8 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         ("23/1 2025", "US/Eastern", "2025-01-23T00:00:00-05:00"),
         ("noon 7th June 1902", "US/Eastern", "1902-06-07T12:00:00-05:00"),
         ("1999-11-13 midnight", "EET", "1999-11-13T00:00:00+02:00"),
+        ("15 October 2999", "Europe/Stockholm", "2999-10-15T00:00:00+01:00"),
+        ("15 oktober 2999", "Europe/Stockholm", "2999-10-15T00:00:00+01:00"),
     ])
     def test_absolute(self, human_string, tz, expected):
         actual = parse(human_string=human_string, tz=tz)
@@ -69,11 +72,15 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
             print(parse(human_string=human_string, tz=tz))
 
     @parameterized.expand([
-        ("tomorrow", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-24T15:38:46+00:00"),
-        ("yesterday", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-22T15:38:46+00:00"),
+        ("now", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-23T15:38:46+00:00"),
+        ("today", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-23T15:38:46+00:00"),
         ("today 16:40", "UTC", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+00:00"),
         ("today 16:40", "UTC", "1970-01-01T17:00:00+00:00", "1970-01-01T16:40:00+00:00"),
         ("today 16:40", "Europe/Stockholm", "1970-01-01T00:00:00+00:00", "1970-01-01T16:40:00+01:00"),
+        ("tomorrow", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-24T15:38:46+00:00"),
+        ("tomorrow 16:40", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-24T16:40:00+00:00"),
+        ("yesterday", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-22T15:38:46+00:00"),
+        ("yesterday 16:40", "UTC", "2025-01-23T16:38:46+01:00", "2025-01-22T16:40:00+00:00"),
         ("7 minutes ago", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-30T06:10:11+00:00"),
         ("in 7 minutes", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-30T06:24:11+00:00"),
         ("two days ago", "UTC", "2026-07-30T08:17:11+02:00", "2026-07-28T06:17:11+00:00"),
@@ -100,6 +107,7 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         ("05:00", "UTC", "2025-03-31T06:00:00+00:00", "2025-04-01T05:00:00+00:00"),
         ("08:00", "Europe/Stockholm", "2026-03-28T09:00:00+01:00", "2026-03-29T08:00:00+02:00"),
         ("friday", "Europe/Stockholm", "2026-10-15T06:20:53+02:00", "2026-10-16T00:00:00+02:00"),
+        ("wednesday", "Europe/Stockholm", "2026-10-15T06:20:53+02:00", "2026-10-21T00:00:00+02:00"),
     ])
     def test_relative_biased_future(self, human_string, tz, now, expected):
         future = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="future")
@@ -124,6 +132,7 @@ class ParseHumanDatetimes(fresh.Seed, AssertDatetimeEqual, unittest.TestCase):
         ("08:00", "Europe/Stockholm", "2026-03-29T07:00:00+02:00", "2026-03-28T08:00:00+01:00"),
         ("7:15", "Europe/Stockholm", "2026-07-30T09:18:22+02:00", "2026-07-30T07:15:00+02:00"),
         ("friday", "Europe/Stockholm", "2026-10-15T06:20:53+02:00", "2026-10-09T00:00:00+02:00"),
+        ("wednesday", "Europe/Stockholm", "2026-10-15T06:20:53+02:00", "2026-10-14T00:00:00+02:00"),
     ])
     def test_relative_biased_past(self, human_string, tz, now, expected):
         past = parse(human_string=human_string, tz=tz, now=iso8601(now), bias="past")
