@@ -17,6 +17,7 @@ import dateutil.parser
 logger = logging.getLogger(__name__)
 
 Bias = Literal["future", "past"]
+DEFAULT_BIAS: Bias = "past"
 
 @dataclass
 class Context:
@@ -52,7 +53,7 @@ class Context:
         if self.country is None:
             self.country = utils.figure_out_countrycode_from_timezone(self.tz)
 
-        self.bias = bias or "past"
+        self.bias = bias or DEFAULT_BIAS
 
     def parse(self, human_string) -> datetime.datetime:
         human_string = human_string.strip()
@@ -88,7 +89,11 @@ class Context:
             try:
                 logger.debug("attempting `date`: %s", human_string)
                 output = subprocess.check_output([exe, "-Is", "--date=" + human_string], text=True, env={"TZ": self.tz or str(self.tzinfo)}, stderr=subprocess.DEVNULL)
-                return datetime.datetime.fromisoformat(output.splitlines()[0])
+                dt = datetime.datetime.fromisoformat(output.splitlines()[0])
+                if self.bias == "past" and dt >= self.now:
+                    logger.debug("rejecting `date` based on bias")
+                else:
+                    return dt
             except subprocess.CalledProcessError:
                 pass
 
@@ -108,7 +113,7 @@ class Context:
             pass
 
         try:
-            logger.debug("trying dateutil.parser.parse: %s", human_string)
+            logger.debug("trying dateutil: %s", human_string)
 
             class CustomParserInfo(dateutil.parser.parserinfo):
                 MONTHS = [
@@ -124,7 +129,7 @@ class Context:
                     ("Oct", "October", "okt", "oktober"),
                     ("Nov", "November", "nov", "november"),
                     ("Dec", "December", "dec", "december"),
-                ]
+                ] # type: ignore
 
                 WEEKDAYS = [
                     ("Mon", "Monday", "mån", "måndag"),
@@ -134,7 +139,7 @@ class Context:
                     ("Fri", "Friday", "fre", "fredag"),
                     ("Sat", "Saturday", "lör", "lördag"),
                     ("Sun", "Sunday", "sön", "söndag"),
-                ]
+                ] # type: ignore
 
             dt = dateutil.parser.parse(
                 timestr = human_string,
@@ -143,7 +148,10 @@ class Context:
             ).replace(tzinfo=self.tzinfo)
             assert utils.is_aware(dt)
             if dt >= self.now:
-                return dt
+                if self.bias != "past":
+                    return dt
+                else:
+                    logger.debug("rejecting dateutil based on bias")
         except dateutil.parser.ParserError:
             pass
 

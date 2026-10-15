@@ -1,14 +1,14 @@
 [project]
 name = "human-datetimes"
-version = "0.1.5"
+version = "0.1.6"
 requires-python = ">=3.13,<4"
 dependencies = [
-    "dateparser (>=1.4.2,<2)",
+    "dateparser (>=1.4.3,<2)",
     "python-dateutil (>=2.9.0,<4)",
-    "cron-converter (>=2.0.1,<3)",
-    "holidays (>=0.103,<1)",
-    "pytz (==2026.3.post1)",
-    "tzdata (==2026.3)",
+    "cron-converter (>=2.0.2,<3)",
+    "holidays (>=0.106,<1)",
+    "pytz (==2026.5)",
+    "tzdata (==2026.5)",
 ]
 
 [tool.poetry.group.test.dependencies]
@@ -26,5 +26,5 @@ log_cli_format = "%(asctime)s:%(name)s:%(levelname)s %(message)s"
 log_cli_date_format = "%Y-%m-%dT%H:%M:%S%z"
 
 [build-system]
-requires = ["poetry-core>=2.4.1,<3.0.0"]
+requires = ["poetry-core>=2.5.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
